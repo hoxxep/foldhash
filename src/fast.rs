@@ -3,7 +3,7 @@
 use core::hash::{BuildHasher, Hasher};
 
 use crate::seed::{gen_per_hasher_seed, GlobalSeed, SharedSeed};
-use crate::{folded_multiply, hash_bytes_long, hash_bytes_medium, rotate_right, ARBITRARY3};
+use crate::{folded_multiply, hash_bytes_long, hash_bytes_medium, read_u32, read_u64, rotate_right, ARBITRARY3};
 
 /// A [`Hasher`] instance implementing foldhash, optimized for speed.
 ///
@@ -68,11 +68,11 @@ impl Hasher for FoldHasher {
             let mut s1 = self.expand_seed;
             // XOR the input into s0, s1, then multiply and fold.
             if len >= 8 {
-                s0 ^= u64::from_ne_bytes(bytes[0..8].try_into().unwrap());
-                s1 ^= u64::from_ne_bytes(bytes[len - 8..].try_into().unwrap());
+                s0 ^= read_u64(bytes, 0);
+                s1 ^= read_u64(bytes, len - 8);
             } else if len >= 4 {
-                s0 ^= u32::from_ne_bytes(bytes[0..4].try_into().unwrap()) as u64;
-                s1 ^= u32::from_ne_bytes(bytes[len - 4..].try_into().unwrap()) as u64;
+                s0 ^= read_u32(bytes, 0) as u64;
+                s1 ^= read_u32(bytes, len - 4) as u64;
             } else if len > 0 {
                 let lo = bytes[0];
                 let mid = bytes[len / 2];
